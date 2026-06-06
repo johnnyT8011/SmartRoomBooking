@@ -18,8 +18,12 @@ import com.example.meetingroom.domain.BookingStatus;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /**
-     * Core anti-overlap query. Returns active bookings for a room whose time range
-     * intersects {@code [start, end)}.
+     * [Refactor #3 Duplicated code] Single anti-overlap query. Returns active bookings for a
+     * room whose time range intersects {@code [start, end)}, optionally excluding one booking
+     * id (pass {@code null} to exclude none). This replaces the two near-identical queries
+     * {@code findOverlapping} / {@code findOverlappingExcluding} that previously duplicated the
+     * intersection predicate verbatim — they are now thin {@code default} delegates below, so
+     * existing callers and tests are unaffected.
      *
      * <p>Two half-open intervals {@code [aStart, aEnd)} and {@code [bStart, bEnd)} overlap
      * iff {@code aStart < bEnd AND aEnd > bStart}. Touching edges (e.g. 09:00-10:00 and
@@ -30,31 +34,31 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             SELECT b FROM Booking b
             WHERE b.room.id = :roomId
               AND b.status IN :activeStatuses
+              AND (:excludeId IS NULL OR b.id <> :excludeId)
               AND b.startTime < :endTime
               AND b.endTime > :startTime
             """)
-    List<Booking> findOverlapping(@Param("roomId") Long roomId,
-                                  @Param("startTime") LocalDateTime startTime,
-                                  @Param("endTime") LocalDateTime endTime,
-                                  @Param("activeStatuses") Collection<BookingStatus> activeStatuses);
+    List<Booking> findActiveOverlapping(@Param("roomId") Long roomId,
+                                        @Param("startTime") LocalDateTime startTime,
+                                        @Param("endTime") LocalDateTime endTime,
+                                        @Param("activeStatuses") Collection<BookingStatus> activeStatuses,
+                                        @Param("excludeId") Long excludeId);
+
+    /** Active bookings for a room intersecting {@code [start, end)} (excluding none). */
+    default List<Booking> findOverlapping(Long roomId, LocalDateTime startTime,
+                                          LocalDateTime endTime, Collection<BookingStatus> activeStatuses) {
+        return findActiveOverlapping(roomId, startTime, endTime, activeStatuses, null);
+    }
 
     /**
-     * Same as {@link #findOverlapping} but ignores one booking (its own id). Used by
+     * As {@link #findOverlapping} but ignores one booking (its own id). Used by
      * {@code confirmBooking} to re-validate the slot without colliding with its own lock.
      */
-    @Query("""
-            SELECT b FROM Booking b
-            WHERE b.room.id = :roomId
-              AND b.id <> :excludeId
-              AND b.status IN :activeStatuses
-              AND b.startTime < :endTime
-              AND b.endTime > :startTime
-            """)
-    List<Booking> findOverlappingExcluding(@Param("roomId") Long roomId,
-                                           @Param("startTime") LocalDateTime startTime,
-                                           @Param("endTime") LocalDateTime endTime,
-                                           @Param("activeStatuses") Collection<BookingStatus> activeStatuses,
-                                           @Param("excludeId") Long excludeId);
+    default List<Booking> findOverlappingExcluding(Long roomId, LocalDateTime startTime,
+                                                   LocalDateTime endTime, Collection<BookingStatus> activeStatuses,
+                                                   Long excludeId) {
+        return findActiveOverlapping(roomId, startTime, endTime, activeStatuses, excludeId);
+    }
 
     /**
      * Active bookings for a given user that intersect {@code [start, end)}. Used to stop the
