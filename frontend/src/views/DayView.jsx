@@ -13,9 +13,11 @@ export default function DayView({ rooms, bookings, baseDate, nowMs, handlers }) 
   const nowMin = nowMinutes(nowMs);
 
   return (
-    <div className="timeline">
-      <TimeAxis />
-      <div style={{ position: 'relative' }}>
+    <div className="timeline" style={{ overflowX: 'auto', width: '100%' }}>
+      <div style={{ minWidth: 'max(100%, 900px)' }}>
+         <TimeAxis />
+      </div>
+      <div style={{ position: 'relative', minWidth: 'max(100%, 900px)' }}>
         {rooms.map((room, idx) => {
           const color = roomColor(idx);
           const dayBookings = bookings.filter(

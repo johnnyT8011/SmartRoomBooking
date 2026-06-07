@@ -1,5 +1,5 @@
 export const START_HOUR = 8;
-export const END_HOUR = 18;
+export const END_HOUR = 20;
 export const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
 
 // Color set assigned to rooms by their order in the fetched list (matches the prototype).

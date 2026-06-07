@@ -2,6 +2,9 @@
 // 線上部署(Vercel)設 VITE_API_BASE=https://<後端>.onrender.com/api -> 直連後端
 const BASE = import.meta.env.VITE_API_BASE || '/api';
 
+/**
+ * 檢查API的請求連線狀態
+ */
 async function handle(res) {
   if (!res.ok) {
     let message = `請求失敗 (${res.status})`;

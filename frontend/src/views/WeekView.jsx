@@ -21,9 +21,11 @@ export default function WeekView({ rooms, bookings, baseDate, nowMs, handlers })
   const todayStr = dayjs(nowMs).format('YYYY-MM-DD');
 
   return (
-    <div className="timeline">
-      <TimeAxis />
-      <div style={{ position: 'relative' }}>
+    <div className="timeline" style={{ overflowX: 'auto', width: '100%' }}>
+      <div style={{ minWidth: 'max(100%, 900px)' }}>
+         <TimeAxis />
+      </div>
+      <div style={{ position: 'relative', minWidth: 'max(100%, 900px)' }}>
         {days.map((day, dayIdx) => {
           const dayStr = day.format('YYYY-MM-DD');
           const isToday = dayStr === todayStr;
