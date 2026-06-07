@@ -27,9 +27,11 @@ const jsonPost = (url, body) =>
     body: body ? JSON.stringify(body) : undefined,
   }).then(handle);
 
+// 呼叫的房間列表與用戶列表。直接發送 GET 請求到 /api/rooms 和 /api/users
 export const getRooms = () => fetch(`${BASE}/rooms`).then(handle);
 export const getUsers = () => fetch(`${BASE}/users`).then(handle);
 
+// 用來抓取指定時間範圍內的預約紀錄
 export const getSchedule = (fromIso, toIso) =>
   fetch(`${BASE}/rooms/schedule?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`)
     .then(handle);
