@@ -37,7 +37,7 @@ class BookingRepositoryTest {
 
     // 預約單
     private Booking persistBooking(LocalDateTime start, LocalDateTime end, BookingStatus status) {
-        return bookingRepository.save(new Booking(user, roomA, start, end, status));
+        return bookingRepository.save(new Booking(user, roomA, new com.example.meetingroom.domain.TimeRange(start, end), status));
     }
 
     // 到資料庫查詢是否有重疊資料
@@ -49,8 +49,8 @@ class BookingRepositoryTest {
 
         // 新增一個預約單，2026/6/5 14:30~15:30，呼叫 findOverlapping 去看 roomA 這個時段是否有人預約
         List<Booking> overlap = bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 14, 30),
-                LocalDateTime.of(2026, 6, 5, 15, 30),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 14, 30),
+                LocalDateTime.of(2026, 6, 5, 15, 30)),
                 BookingStatus.activeStatuses());
         // 抓出結果需為 1，因為上面建立一筆重疊的
         assertThat(overlap).hasSize(1);
@@ -65,14 +65,14 @@ class BookingRepositoryTest {
 
         // 新增一個預約單預約 2026/6/5 15:00~16:00，預期是空的可以預約
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 15, 0),
-                LocalDateTime.of(2026, 6, 5, 16, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 15, 0),
+                LocalDateTime.of(2026, 6, 5, 16, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
 
         // 新增一個預約單預約 2026/6/5 13:00~14:00，預期是空的可以預約
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 13, 0),
-                LocalDateTime.of(2026, 6, 5, 14, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 13, 0),
+                LocalDateTime.of(2026, 6, 5, 14, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
     }
 
@@ -88,8 +88,8 @@ class BookingRepositoryTest {
 
         // 新增一個預約單預約 2026/6/5 14:00–15:00，預期是空的可以預約
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 14, 0),
-                LocalDateTime.of(2026, 6, 5, 15, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 14, 0),
+                LocalDateTime.of(2026, 6, 5, 15, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
     }
 
@@ -102,7 +102,7 @@ class BookingRepositoryTest {
 
         // 確定 14:00~15:00 會議室 A 沒有人預約
         assertThat(bookingRepository.findOverlappingExcluding(roomA.getId(),
-                self.getStartTime(), self.getEndTime(),
+                new com.example.meetingroom.domain.TimeRange(self.getStartTime(), self.getEndTime()),
                 BookingStatus.activeStatuses(), self.getId())).isEmpty();
     }
 

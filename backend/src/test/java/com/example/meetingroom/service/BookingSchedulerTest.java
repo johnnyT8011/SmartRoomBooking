@@ -60,8 +60,8 @@ class BookingSchedulerTest {
     void releaseExpiredLocks_marksExpired_andNotifies() {
         // 建立一筆 LOCKING 的預約，2026/6/5 11:00~11:30
         Booking stale = new Booking(user, room,
-                LocalDateTime.of(2026, 6, 5, 11, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 30), BookingStatus.LOCKING);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 11, 0),
+                LocalDateTime.of(2026, 6, 5, 11, 30)), BookingStatus.LOCKING);
         // 確定截止時間是 09:20 - 1分鐘，現在是 09:20
         stale.setLockExpiresAt(NOW.minusMinutes(1));
         // 用 findExpiredLocks 找已經超過時間的預約，回傳 stale
@@ -81,8 +81,8 @@ class BookingSchedulerTest {
     void releaseNoShows_usesNowMinus15Minutes_andReleases() {
         // 建立一筆 BOOKED 確定預約，2026/6/5 09:00~09:30，現在是 09:20
         Booking noShow = new Booking(user, room,
-                LocalDateTime.of(2026, 6, 5, 9, 0),
-                LocalDateTime.of(2026, 6, 5, 9, 30), BookingStatus.BOOKED);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 9, 0),
+                LocalDateTime.of(2026, 6, 5, 9, 30)), BookingStatus.BOOKED);
         // 用 findNoShows 找已經超過報到時間( 15 分鐘)回傳 noShow
         given(bookingRepository.findNoShows(any())).willReturn(List.of(noShow));
         

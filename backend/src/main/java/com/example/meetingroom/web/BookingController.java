@@ -16,6 +16,7 @@ import com.example.meetingroom.service.BookingService;
 import com.example.meetingroom.service.NotificationService;
 import com.example.meetingroom.web.dto.BookingResponse;
 import com.example.meetingroom.web.dto.LockRequest;
+import com.example.meetingroom.domain.TimeRange;
 
 import jakarta.validation.Valid;
 
@@ -44,8 +45,8 @@ public class BookingController {
 
     @PostMapping("/api/bookings/lock")
     public ResponseEntity<BookingResponse> lock(@Valid @RequestBody LockRequest request) {
-        Booking booking = bookingService.lockRoom(request.getUserId(), request.getRoomId(),
-                request.getStartTime(), request.getEndTime());
+        TimeRange range = new TimeRange(request.getStartTime(), request.getEndTime());
+        Booking booking = bookingService.lockRoom(request.getUserId(), request.getRoomId(), range);
         return ResponseEntity.status(HttpStatus.CREATED).body(BookingResponse.from(booking));
     }
 

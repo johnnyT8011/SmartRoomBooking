@@ -33,8 +33,8 @@ class EntityMappingTest {
         User user = em.persist(new User("牛", "niu@example.com"));
         MeetingRoom room = em.persist(new MeetingRoom("會議室 A"));
         Booking booking = em.persist(new Booking(user, room,
-                LocalDateTime.of(2026, 6, 5, 9, 0),
-                LocalDateTime.of(2026, 6, 5, 10, 30),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 9, 0),
+                LocalDateTime.of(2026, 6, 5, 10, 30)),
                 BookingStatus.BOOKED));
         // 寫入資料庫
         em.flush();

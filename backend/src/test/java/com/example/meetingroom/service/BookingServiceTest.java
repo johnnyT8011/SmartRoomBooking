@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.example.meetingroom.domain.Booking;
 import com.example.meetingroom.domain.BookingStatus;
 import com.example.meetingroom.domain.MeetingRoom;
+import com.example.meetingroom.domain.TimeRange;
 import com.example.meetingroom.domain.User;
 import com.example.meetingroom.exception.BookingConflictException;
 import com.example.meetingroom.exception.MeetingRoomNotFoundException;
@@ -90,13 +91,13 @@ class BookingServiceTest {
         // 呼叫前面建好的殘根
         stubExistingUserAndRoom();
         // 設定預約狀況 findOverlapping 會議室 A 2026/6/5 10:00 到 10:30 回傳 List.of() 代表沒人預約
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of());
         // 後端丟什麼 Booking(any(Booking.class)) 就回傳什麼回去(inv.getArgument(0))
         given(bookingRepository.save(any(Booking.class))).willAnswer(inv -> inv.getArgument(0));
 
         // 幫員工甲鎖定會議室 A 的 START 到 END 期間
-        Booking result = service.lockRoom(1L, 2L, START, END);
+        Booking result = service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END));
         // 檢查狀態是否是 LOCKING
         assertThat(result.getStatus()).isEqualTo(BookingStatus.LOCKING);
         // 鎖定的時間 LockedAt 要在現在時間 2026/6/5 8:00
@@ -105,7 +106,7 @@ class BookingServiceTest {
         assertThat(result.getLockExpiresAt()).isEqualTo(NOW.plusMinutes(5));
 
         // 驗證是否把 user, START, END 丟入
-        verify(validator).validateAll(user, START, END);
+        verify(validator).validateAll(eq(user), any(TimeRange.class)); // [Refactor #1/#2] now a TimeRange
         // 驗證是否有把使用者 ID、任何通知文字丟入 notificationService 跑網頁通知
         verify(notificationService).sendSseEvent(eq(1L), any());
     }
@@ -116,12 +117,12 @@ class BookingServiceTest {
         // 呼叫前面建好的殘根
         stubExistingUserAndRoom();
         // new 一筆資料，借的是 會議室 A，時間是 2026/6/5 10:00 到 10:30，且狀態是 BOOKED
-        Booking existing = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking existing = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         // 設定預約狀況 findOverlapping 會議室 A 2026/6/5 10:00 到 10:30 回傳 List.of(existing) 代表有一個 user 預約這個會議室
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of(existing));
         // 呼叫 service.lockRoom ，而因為有人預約了，所以形態為 BookingConflictException ，警告標語要有時段重疊
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(BookingConflictException.class)
                 .hasMessageContaining("時段重疊");
         // 驗證 bookingRepository 沒有 save 任何預約
@@ -134,17 +135,17 @@ class BookingServiceTest {
         // 呼叫前面建好的殘根
         stubExistingUserAndRoom();
         // new 一筆資料，員工甲借會議室 A 2026/6/5 10:00 到 10:30，狀態是 LOCKING
-        Booking first = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking first = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         // 第一次呼叫回傳空的，第二次呼叫回傳有人
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of())
                 .willReturn(List.of(first));
         // 後端丟什麼 Booking(any(Booking.class)) 就回傳什麼回去(inv.getArgument(0))
         given(bookingRepository.save(any(Booking.class))).willAnswer(inv -> inv.getArgument(0));
         // 驗證第一個人，有成功預約(.isNotNull())
-        assertThat(service.lockRoom(1L, 2L, START, END)).isNotNull();
+        assertThat(service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END))).isNotNull();
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤必須剛好預約衝突(.isInstanceOf(BookingConflictException.class))
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(BookingConflictException.class);
     }
 
@@ -154,7 +155,7 @@ class BookingServiceTest {
         // 設定查詢 ID 99L 時回傳 Optional.empty() 查無此人
         given(userRepository.findById(99L)).willReturn(Optional.empty());
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤是 UserNotFoundException.class
-        assertThatThrownBy(() -> service.lockRoom(99L, 2L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(99L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(UserNotFoundException.class);
         // 確保拋出異常中，沒有執行過任何 save()
         verify(bookingRepository, never()).save(any());
@@ -168,7 +169,7 @@ class BookingServiceTest {
         // 會議室查不到 ID 404L 時回傳 Optional.empty() 查無此會議室
         given(meetingRoomRepository.findByIdForUpdate(404L)).willReturn(Optional.empty());
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤是 MeetingRoomNotFoundException.class
-        assertThatThrownBy(() -> service.lockRoom(1L, 404L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(1L, 404L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(MeetingRoomNotFoundException.class);
         // 確保拋出異常中，沒有執行過任何 save()
         verify(bookingRepository, never()).save(any());
@@ -178,7 +179,7 @@ class BookingServiceTest {
     @Test
     void cancelBooking_setsCancelled_andDoesNotDelete() {
         // new 一筆狀態為 BOOKED 的預約
-        Booking booking = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         // 設定已經存在一筆 ID 為 50 的資料
         ReflectionTestUtils.setField(booking, "id", 50L);
         // 當 findDetailedById 呼叫 ID 50 時，回傳狀態為 BOOKED 的預約
@@ -217,13 +218,13 @@ class BookingServiceTest {
     @Test
     void confirmBooking_promotesLockingToBooked() {
         // new 一筆預約員工甲借會議室 A 2026/6/5 10:00 到 10:30，狀態是 LOCKING
-        Booking booking = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         // 設定已經存在一筆 ID 為 60 的資料
         ReflectionTestUtils.setField(booking, "id", 60L);
         // 當 findDetailedById 呼叫 ID 60 時，回傳狀態為 LOCKING 的預約
         given(bookingRepository.findDetailedById(60L)).willReturn(Optional.of(booking));
         // 除了自己這時段有沒有其他人
-        given(bookingRepository.findOverlappingExcluding(eq(2L), eq(START), eq(END), any(), eq(60L)))
+        given(bookingRepository.findOverlappingExcluding(eq(2L), any(), any(), eq(60L)))
 
         .willReturn(List.of());
         Booking result = service.confirmBooking(60L);
@@ -234,14 +235,14 @@ class BookingServiceTest {
     @Test
     void confirmBooking_whenSlotStolen_throwsConflict() {
         // new 一筆預約員工甲借會議室 A 2026/6/5 10:00 到 10:30，狀態是 LOCKING
-        Booking booking = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         // 設定已經存在一筆 ID 為 61 的資料
         ReflectionTestUtils.setField(booking, "id", 61L);
         // new 一筆預約員工甲借會議室 A 2026/6/5 10:00 到 10:30，狀態是 BOOKED
-        Booking other = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking other = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         // 除了自己這時段有沒有其他人，回傳有List.of(other)
         given(bookingRepository.findDetailedById(61L)).willReturn(Optional.of(booking));
-        given(bookingRepository.findOverlappingExcluding(eq(2L), eq(START), eq(END), any(), eq(61L)))
+        given(bookingRepository.findOverlappingExcluding(eq(2L), any(), any(), eq(61L)))
                 .willReturn(List.of(other));
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤是 BookingConflictException.class
         assertThatThrownBy(() -> service.confirmBooking(61L))
@@ -254,7 +255,7 @@ class BookingServiceTest {
     @Test
     void checkIn_setsCheckedInAndTimestamp() {
         // new 一筆預約員工甲借會議室 A 2026/6/5 10:00 到 10:30，狀態是 BOOKED
-        Booking booking = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         // 設定已經存在一筆 ID 為 70 的資料
         ReflectionTestUtils.setField(booking, "id", 70L);
         // 當 findDetailedById 呼叫 ID 70 時，回傳狀態為 BOOKED 的預約

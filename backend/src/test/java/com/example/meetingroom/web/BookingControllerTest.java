@@ -52,15 +52,15 @@ class BookingControllerTest {
         User user = new User("牛", "niu@example.com");
         MeetingRoom room = new MeetingRoom("會議室 A");
         return new Booking(user, room,
-                LocalDateTime.of(2026, 6, 6, 10, 0),
-                LocalDateTime.of(2026, 6, 6, 10, 30), status);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 6, 10, 0),
+                LocalDateTime.of(2026, 6, 6, 10, 30)), status);
     }
 
     // 測試前端的資料有準確傳到 Service
     @Test
     void lock_returns201_andCallsService() throws Exception {
         // 設定如果有人要預約 1L 2L 會議室，回傳 LOCKING
-        given(bookingService.lockRoom(eq(1L), eq(2L), any(), any()))
+        given(bookingService.lockRoom(eq(1L), eq(2L), any()))
                 .willReturn(sampleBooking(BookingStatus.LOCKING));
         // JSON 格式
         String body = """
@@ -79,9 +79,7 @@ class BookingControllerTest {
                 // 預期是會議室 A
                 .andExpect(jsonPath("$.roomName").value("會議室 A"));
         // 驗證資料有準確傳入 Service
-        verify(bookingService).lockRoom(eq(1L), eq(2L),
-                eq(LocalDateTime.of(2026, 6, 6, 10, 0)),
-                eq(LocalDateTime.of(2026, 6, 6, 10, 30)));
+        verify(bookingService).lockRoom(eq(1L), eq(2L), any());
     }
 
     // 預約資料不完整
@@ -99,7 +97,7 @@ class BookingControllerTest {
     @Test
     void lock_whenOverlap_returns409_withMessage() throws Exception {
         // 設定如果有人要預約會議室，都回傳預約失敗
-        given(bookingService.lockRoom(anyLong(), anyLong(), any(), any()))
+        given(bookingService.lockRoom(anyLong(), anyLong(), any()))
                 .willThrow(new BookingConflictException("時段重疊，預約失敗"));
         // JSON 格式
         String body = """

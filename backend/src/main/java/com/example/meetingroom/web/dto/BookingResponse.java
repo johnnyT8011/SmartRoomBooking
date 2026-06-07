@@ -24,10 +24,11 @@ public class BookingResponse {
     public static BookingResponse from(Booking b) {
         BookingResponse r = new BookingResponse();
         r.id = b.getId();
-        r.roomId = b.getRoom().getId();
-        r.roomName = b.getRoom().getRoomName();
-        r.userId = b.getUser().getId();
-        r.borrower = b.getUser().getEmpName();
+        // [Refactor #4 Hide Delegate] ask the booking directly instead of b.getRoom()/b.getUser() chains.
+        r.roomId = b.getRoomId();
+        r.roomName = b.getRoomName();
+        r.userId = b.getUserId();
+        r.borrower = b.getBorrowerName();
         r.startTime = b.getStartTime();
         r.endTime = b.getEndTime();
         r.status = b.getStatus().name();

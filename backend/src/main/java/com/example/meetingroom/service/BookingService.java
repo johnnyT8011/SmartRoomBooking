@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.meetingroom.domain.Booking;
 import com.example.meetingroom.domain.BookingStatus;
 import com.example.meetingroom.domain.MeetingRoom;
+import com.example.meetingroom.domain.TimeRange;
 import com.example.meetingroom.domain.User;
 import com.example.meetingroom.exception.BookingConflictException;
 import com.example.meetingroom.exception.BookingNotFoundException;
@@ -66,18 +67,19 @@ public class BookingService {
      * caller blocks, then sees the overlap and is rejected.</p>
      */
     @Transactional
-    public Booking lockRoom(Long userId, Long roomId, LocalDateTime start, LocalDateTime end) {
+    public Booking lockRoom(Long userId, Long roomId, TimeRange range) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         // Pessimistic lock on the room serializes concurrent booking attempts (Scenario 3).
         MeetingRoom room = meetingRoomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new MeetingRoomNotFoundException(roomId));
 
-        validator.validateAll(user, start, end);
-        ensureNoRoomOverlap(roomId, start, end, null);
+
+        validator.validateAll(user, range);
+        ensureNoRoomOverlap(roomId, range, null);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        Booking booking = new Booking(user, room, start, end, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, range, BookingStatus.LOCKING);
         booking.setLockedAt(now);
         booking.setLockExpiresAt(now.plusMinutes(LOCK_MINUTES));
         Booking saved = bookingRepository.save(booking);
@@ -98,12 +100,13 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.LOCKING) {
             throw new InvalidBookingException(MSG_NOT_LOCKING);
         }
-        ensureNoRoomOverlap(booking.getRoom().getId(), booking.getStartTime(), booking.getEndTime(),
-                booking.getId());
+        // [Refactor #1/#4] booking.getRoomId() (Hide Delegate) + TimeRange parameter object.
+        ensureNoRoomOverlap(booking.getRoomId(),
+                new TimeRange(booking.getStartTime(), booking.getEndTime()), booking.getId());
 
         booking.setStatus(BookingStatus.BOOKED);
-        notificationService.sendSseEvent(booking.getUser().getId(),
-                "預約成功：" + booking.getRoom().getRoomName());
+        notificationService.sendSseEvent(booking.getUserId(),
+                "預約成功：" + booking.getRoomName());
         return booking;
     }
 
@@ -120,8 +123,9 @@ public class BookingService {
             throw new InvalidBookingException(MSG_CANNOT_CANCEL);
         }
         booking.setStatus(BookingStatus.CANCELLED);
-        notificationService.sendSseEvent(booking.getUser().getId(),
-                "已取消預約：" + booking.getRoom().getRoomName() + "，時段已釋放");
+        // [Refactor #4 Hide Delegate]
+        notificationService.sendSseEvent(booking.getUserId(),
+                "已取消預約：" + booking.getRoomName() + "，時段已釋放");
         return booking;
     }
 
@@ -137,8 +141,9 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.CHECKED_IN);
         booking.setCheckedInAt(LocalDateTime.now(clock));
-        notificationService.sendSseEvent(booking.getUser().getId(),
-                "報到成功：" + booking.getRoom().getRoomName());
+        // [Refactor #4 Hide Delegate]
+        notificationService.sendSseEvent(booking.getUserId(),
+                "報到成功：" + booking.getRoomName());
         return booking;
     }
 
@@ -151,19 +156,21 @@ public class BookingService {
         LocalDateTime weekStart = LocalDateTime.now(clock)
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 .toLocalDate().atStartOfDay();
-        return bookingRepository.findInRangeWithDetails(weekStart, weekStart.plusDays(7));
+        return bookingRepository.findInRangeWithDetails(new TimeRange(weekStart, weekStart.plusDays(7)));
     }
 
     /** Bookings occupying any slot within an arbitrary {@code [from, to)} range. */
     @Transactional(readOnly = true)
-    public List<Booking> getSchedule(LocalDateTime from, LocalDateTime to) {
-        return bookingRepository.findInRangeWithDetails(from, to);
+    public List<Booking> getSchedule(TimeRange range) {
+        return bookingRepository.findInRangeWithDetails(range);
     }
 
-    private void ensureNoRoomOverlap(Long roomId, LocalDateTime start, LocalDateTime end, Long excludeId) {
+    // [Refactor #1/#2] Takes a TimeRange instead of a separate (start, end) pair.
+    private void ensureNoRoomOverlap(Long roomId, TimeRange range, Long excludeId) {
         List<Booking> overlaps = (excludeId == null)
-                ? bookingRepository.findOverlapping(roomId, start, end, BookingStatus.activeStatuses())
-                : bookingRepository.findOverlappingExcluding(roomId, start, end,
+                ? bookingRepository.findOverlapping(roomId, range,
+                        BookingStatus.activeStatuses())
+                : bookingRepository.findOverlappingExcluding(roomId, range,
                         BookingStatus.activeStatuses(), excludeId);
         if (!overlaps.isEmpty()) {
             throw new BookingConflictException(MSG_OVERLAP);
