@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.example.meetingroom.domain.Booking;
 import com.example.meetingroom.domain.BookingStatus;
 import com.example.meetingroom.domain.MeetingRoom;
+import com.example.meetingroom.domain.TimeRange;
 import com.example.meetingroom.domain.User;
 import com.example.meetingroom.exception.BookingConflictException;
 import com.example.meetingroom.exception.MeetingRoomNotFoundException;
@@ -87,7 +88,7 @@ class BookingServiceTest {
         assertThat(result.getLockedAt()).isEqualTo(NOW);
         assertThat(result.getLockExpiresAt()).isEqualTo(NOW.plusMinutes(5));
 
-        verify(validator).validateAll(user, START, END);
+        verify(validator).validateAll(eq(user), any(TimeRange.class)); // [Refactor #1/#2] now a TimeRange
         verify(notificationService).sendSseEvent(eq(1L), any());
     }
 

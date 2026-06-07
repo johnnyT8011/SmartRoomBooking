@@ -1,4 +1,6 @@
-const BASE = '/api';
+// 本機開發未設 VITE_API_BASE -> 用 '/api'，走 vite proxy 到 localhost:8080
+// 線上部署(Vercel)設 VITE_API_BASE=https://<後端>.onrender.com/api -> 直連後端
+const BASE = import.meta.env.VITE_API_BASE || '/api';
 
 /**
  * 檢查API的請求連線狀態
@@ -25,11 +27,9 @@ const jsonPost = (url, body) =>
     body: body ? JSON.stringify(body) : undefined,
   }).then(handle);
 
-// 呼叫的房間列表與用戶列表。直接發送 GET 請求到 /api/rooms 和 /api/users
 export const getRooms = () => fetch(`${BASE}/rooms`).then(handle);
 export const getUsers = () => fetch(`${BASE}/users`).then(handle);
 
-// 用來抓取指定時間範圍內的預約紀錄
 export const getSchedule = (fromIso, toIso) =>
   fetch(`${BASE}/rooms/schedule?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`)
     .then(handle);

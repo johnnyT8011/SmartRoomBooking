@@ -137,4 +137,24 @@ public class Booking {
     public void setCheckedInAt(LocalDateTime checkedInAt) {
         this.checkedInAt = checkedInAt;
     }
+
+    // [Refactor #4 Message Chains — Hide Delegate] Delegating accessors so callers ask the
+    // booking directly (booking.getRoomName()) instead of walking booking.getRoom().getRoomName(),
+    // i.e. they no longer need to know the Room/User structure behind a Booking.
+
+    public Long getRoomId() {
+        return room.getId();
+    }
+
+    public String getRoomName() {
+        return room.getRoomName();
+    }
+
+    public Long getUserId() {
+        return user.getId();
+    }
+
+    public String getBorrowerName() {
+        return user.getEmpName();
+    }
 }
