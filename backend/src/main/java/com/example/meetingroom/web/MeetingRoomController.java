@@ -13,6 +13,7 @@ import com.example.meetingroom.repository.MeetingRoomRepository;
 import com.example.meetingroom.service.BookingService;
 import com.example.meetingroom.web.dto.BookingResponse;
 import com.example.meetingroom.web.dto.RoomResponse;
+import com.example.meetingroom.domain.TimeRange;
 
 /**
  * Read-only resource queries: room master data and the current week's occupied slots.
@@ -51,7 +52,7 @@ public class MeetingRoomController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         List<Booking> bookings = (from != null && to != null)
-                ? bookingService.getSchedule(from, to)
+                ? bookingService.getSchedule(new TimeRange(from, to))
                 : bookingService.getWeeklySchedule();
         return bookings.stream().map(BookingResponse::from).toList();
     }

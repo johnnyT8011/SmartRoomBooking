@@ -5,7 +5,7 @@ const HOURS = END_HOUR - START_HOUR;
 /** The shared hour ruler shown above day/week timelines. */
 export function TimeAxis() {
   return (
-    <div className="time-axis">
+    <div className="time-axis" style={{ minWidth: 'max(100%, 900px)' }}>
       {Array.from({ length: HOURS + 1 }).map((_, i) => (
         <span key={i} className="tick" style={{ left: `${(i / HOURS) * 100}%` }}>
           {String(START_HOUR + i).padStart(2, '0')}:00

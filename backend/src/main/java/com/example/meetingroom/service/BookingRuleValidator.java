@@ -1,11 +1,11 @@
 package com.example.meetingroom.service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
 import com.example.meetingroom.domain.BookingStatus;
+import com.example.meetingroom.domain.TimeRange;
 import com.example.meetingroom.domain.User;
 import com.example.meetingroom.exception.BookingConflictException;
 import com.example.meetingroom.exception.InvalidBookingException;
@@ -15,6 +15,10 @@ import java.time.Clock;
 
 /**
  * Stateless validator for the "防呆" (idiot-proofing) booking rules.
+ *
+ * <p>[Refactor #1 Data clumps / #2 Long parameter list] All rule methods now take a single
+ * {@link TimeRange} instead of a loose {@code (startTime, endTime)} pair, and the
+ * duration / 30-minute-alignment arithmetic is delegated to {@code TimeRange}.</p>
  *
  * <ul>
  *   <li>{@link #validateTimeBlock} — start/end must align to 30-minute boundaries.</li>
@@ -48,30 +52,26 @@ public class BookingRuleValidator {
     }
 
     /** Run every rule. Convenience entry point used by {@link BookingService#lockRoom}. */
-    public void validateAll(User user, LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeBlock(startTime, endTime);
-        validateDuration(startTime, endTime);
-        validateBookingWindow(startTime, endTime);
-        checkUserConflict(user, startTime, endTime);
+    public void validateAll(User user, TimeRange range) {
+        validateTimeBlock(range);
+        validateDuration(range);
+        validateBookingWindow(range);
+        checkUserConflict(user, range);
     }
 
     /** Both endpoints must fall exactly on a 00 or 30 minute mark (no stray seconds/nanos). */
-    public void validateTimeBlock(LocalDateTime startTime, LocalDateTime endTime) {
-        if (!isAligned(startTime) || !isAligned(endTime)) {
+    public void validateTimeBlock(TimeRange range) {
+        if (!range.isAlignedTo(SLOT_MINUTES)) {
             throw new InvalidBookingException(MSG_NOT_30_BLOCK);
         }
     }
 
-    private boolean isAligned(LocalDateTime t) {
-        return t.getMinute() % SLOT_MINUTES == 0 && t.getSecond() == 0 && t.getNano() == 0;
-    }
-
     /** 30 minutes &le; duration &le; 4 hours, and end strictly after start. */
-    public void validateDuration(LocalDateTime startTime, LocalDateTime endTime) {
-        if (!endTime.isAfter(startTime)) {
+    public void validateDuration(TimeRange range) {
+        if (!range.endsAfterStart()) {
             throw new InvalidBookingException(MSG_END_BEFORE_START);
         }
-        long minutes = Duration.between(startTime, endTime).toMinutes();
+        long minutes = range.durationMinutes();
         if (minutes < MIN_DURATION_MINUTES) {
             throw new InvalidBookingException(MSG_MIN_DURATION);
         }
@@ -81,20 +81,20 @@ public class BookingRuleValidator {
     }
 
     /** Start must not be in the past and must be within {@value #BOOKING_WINDOW_DAYS} days. */
-    public void validateBookingWindow(LocalDateTime startTime, LocalDateTime endTime) {
+    public void validateBookingWindow(TimeRange range) {
         LocalDateTime now = LocalDateTime.now(clock);
-        if (startTime.isBefore(now)) {
+        if (range.getStart().isBefore(now)) {
             throw new InvalidBookingException(MSG_PAST);
         }
-        if (startTime.isAfter(now.plusDays(BOOKING_WINDOW_DAYS))) {
+        if (range.getStart().isAfter(now.plusDays(BOOKING_WINDOW_DAYS))) {
             throw new InvalidBookingException(MSG_WINDOW);
         }
     }
 
     /** Reject if this user already holds an active booking overlapping the requested slot. */
-    public void checkUserConflict(User user, LocalDateTime startTime, LocalDateTime endTime) {
+    public void checkUserConflict(User user, TimeRange range) {
         boolean clash = !bookingRepository
-                .findUserOverlapping(user.getId(), startTime, endTime, BookingStatus.activeStatuses())
+                .findUserOverlapping(user.getId(), range, BookingStatus.activeStatuses())
                 .isEmpty();
         if (clash) {
             throw new BookingConflictException(MSG_USER_CONFLICT);

@@ -36,7 +36,7 @@ public class NotificationService {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         register(userId, emitter);
         try {
-            emitter.send(SseEmitter.event().name("connected").data("SSE 連線已建立"));
+            emitter.send(SseEmitter.event().name("connected").data("SSE 連線已建立"));  
         } catch (IOException e) {
             log.debug("Failed to send initial SSE handshake to user {}", userId, e);
         }
@@ -49,8 +49,8 @@ public class NotificationService {
      */
     void register(Long userId, SseEmitter emitter) {
         emittersByUser.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(emitter);
-        emitter.onCompletion(() -> remove(userId, emitter));
-        emitter.onTimeout(() -> remove(userId, emitter));
+        emitter.onCompletion(() -> remove(userId, emitter)); // Remove on normal completion (client disconnect).
+        emitter.onTimeout(() -> remove(userId, emitter)); // Remove on timeout (server-side cleanup after 1 hour).
         emitter.onError(e -> remove(userId, emitter));
     }
 
