@@ -1,42 +1,55 @@
-# GitHub Actions CI — 每次 push / 開 PR 時自動 build 並跑後端測試
+# GitHub Actions CI — push / PR 時自動 build 並跑「後端 + 前端」測試
 # 放置位置：repo 根目錄下的  .github/workflows/ci.yml
-#
-# ── 路徑設定（重要，二選一）─────────────────────────────────
-# 預設假設你的 repo 根目錄是 SmartRoomBooking-new-version（底下有 backend/、frontend/），
-# 所以下面用 working-directory: backend 把指令切到 backend 子目錄。
-#   ▸ 若你的 repo 根目錄「本身就是 backend」（直接看得到 pom.xml、mvnw），
-#     請把下方那兩行 `working-directory: backend` 刪掉即可。
-# ──────────────────────────────────────────────────────────
 
 name: CI
 
 on:
   push:
     branches: [ main, master, new-version ]
-  pull_request:                  # 任何 PR 都會跑
+  pull_request:
+
+# 最小權限：只給讀取原始碼。順便清掉 CodeQL 報的 "Workflow does not contain permissions" (CWE-275)
+permissions:
+  contents: read
 
 jobs:
+  # ---------- 後端：Spring Boot / JUnit ----------
   backend-test:
     name: Backend build & test (Java 17)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend   # ← repo 根目錄就是 backend 的話，刪掉這行（連同上面 defaults/run）
-
+        working-directory: backend
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'         # 對應 pom.xml 的 <java.version>17</java.version>
-          cache: maven               # 快取 ~/.m2，第二次以後跑更快
-
+          java-version: '17'
+          cache: maven
       - name: Make mvnw executable
-        run: chmod +x mvnw           # Windows 上 commit 的 mvnw 常缺執行權限，會 Permission denied
+        run: chmod +x mvnw
+      - name: Run backend tests
+        run: ./mvnw -B test          # 通過時 log 出現 Tests run: 48, Failures: 0
 
-      - name: Run tests
-        run: ./mvnw -B test          # 等同你本機跑的；H2 in-memory，CI 不需外接資料庫
-                                     # 通過時 log 會出現 Tests run: 48, Failures: 0, Errors: 0
+  # ---------- 前端：Vite / Vitest ----------
+  frontend-test:
+    name: Frontend test (Node 20)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        run: npm ci               # 照 package-lock 裝齊（含 testing-library / jsdom 等測試套件）
+      - name: Run frontend tests
+        run: npm run test         # = Vitest。GitHub Actions 會設 CI=true，Vitest 自動以「跑一次就結束」模式執行
+        # 萬一它卡住不結束(進了 watch 模式)，把這行改成： npx vitest run
