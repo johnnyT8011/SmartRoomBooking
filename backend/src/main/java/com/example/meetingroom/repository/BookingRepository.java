@@ -93,8 +93,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             SELECT b FROM Booking b
             JOIN FETCH b.user
             JOIN FETCH b.room
-            WHERE b.startTime < :rangeEnd
-              AND b.endTime > :rangeStart
+            WHERE b.startTime < :#{#range.end}
+              AND b.endTime > :#{#range.start}
             ORDER BY b.startTime ASC
             """)
     List<Booking> findInRangeWithDetails(@Param("range") com.example.meetingroom.domain.TimeRange range);
