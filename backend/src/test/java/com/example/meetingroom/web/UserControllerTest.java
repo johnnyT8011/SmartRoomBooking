@@ -25,6 +25,7 @@ class UserControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
+    // 正確地透過 API 拿取資料
     @Test
     void users_returnsList() throws Exception {
         given(userRepository.findAll()).willReturn(List.of(
