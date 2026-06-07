@@ -35,29 +35,27 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             WHERE b.room.id = :roomId
               AND b.status IN :activeStatuses
               AND (:excludeId IS NULL OR b.id <> :excludeId)
-              AND b.startTime < :endTime
-              AND b.endTime > :startTime
+              AND b.startTime < :#{#range.end}
+              AND b.endTime > :#{#range.start}
             """)
     List<Booking> findActiveOverlapping(@Param("roomId") Long roomId,
-                                        @Param("startTime") LocalDateTime startTime,
-                                        @Param("endTime") LocalDateTime endTime,
+                                        @Param("range") com.example.meetingroom.domain.TimeRange range,
                                         @Param("activeStatuses") Collection<BookingStatus> activeStatuses,
                                         @Param("excludeId") Long excludeId);
 
     /** Active bookings for a room intersecting {@code [start, end)} (excluding none). */
-    default List<Booking> findOverlapping(Long roomId, LocalDateTime startTime,
-                                          LocalDateTime endTime, Collection<BookingStatus> activeStatuses) {
-        return findActiveOverlapping(roomId, startTime, endTime, activeStatuses, null);
+    default List<Booking> findOverlapping(Long roomId, com.example.meetingroom.domain.TimeRange range, Collection<BookingStatus> activeStatuses) {
+        return findActiveOverlapping(roomId, range, activeStatuses, null);
     }
 
     /**
      * As {@link #findOverlapping} but ignores one booking (its own id). Used by
      * {@code confirmBooking} to re-validate the slot without colliding with its own lock.
      */
-    default List<Booking> findOverlappingExcluding(Long roomId, LocalDateTime startTime,
-                                                   LocalDateTime endTime, Collection<BookingStatus> activeStatuses,
+    default List<Booking> findOverlappingExcluding(Long roomId, com.example.meetingroom.domain.TimeRange range,
+                                                   Collection<BookingStatus> activeStatuses,
                                                    Long excludeId) {
-        return findActiveOverlapping(roomId, startTime, endTime, activeStatuses, excludeId);
+        return findActiveOverlapping(roomId, range, activeStatuses, excludeId);
     }
 
     /**
@@ -68,12 +66,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             SELECT b FROM Booking b
             WHERE b.user.id = :userId
               AND b.status IN :activeStatuses
-              AND b.startTime < :endTime
-              AND b.endTime > :startTime
+              AND b.startTime < :#{#range.end}
+              AND b.endTime > :#{#range.start}
             """)
     List<Booking> findUserOverlapping(@Param("userId") Long userId,
-                                      @Param("startTime") LocalDateTime startTime,
-                                      @Param("endTime") LocalDateTime endTime,
+                                      @Param("range") com.example.meetingroom.domain.TimeRange range,
                                       @Param("activeStatuses") Collection<BookingStatus> activeStatuses);
 
     /** LOCKING bookings whose 5-minute hold has expired ({@code lockExpiresAt < now}). */
@@ -100,8 +97,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
               AND b.endTime > :rangeStart
             ORDER BY b.startTime ASC
             """)
-    List<Booking> findInRangeWithDetails(@Param("rangeStart") LocalDateTime rangeStart,
-                                         @Param("rangeEnd") LocalDateTime rangeEnd);
+    List<Booking> findInRangeWithDetails(@Param("range") com.example.meetingroom.domain.TimeRange range);
 
     /**
      * Load a single booking with its {@code user} and {@code room} eagerly fetched, so the

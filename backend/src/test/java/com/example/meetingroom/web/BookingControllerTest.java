@@ -51,13 +51,13 @@ class BookingControllerTest {
         User user = new User("牛", "niu@example.com");
         MeetingRoom room = new MeetingRoom("會議室 A");
         return new Booking(user, room,
-                LocalDateTime.of(2026, 6, 6, 10, 0),
-                LocalDateTime.of(2026, 6, 6, 10, 30), status);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 6, 10, 0),
+                LocalDateTime.of(2026, 6, 6, 10, 30)), status);
     }
 
     @Test
     void lock_returns201_andCallsService() throws Exception {
-        given(bookingService.lockRoom(eq(1L), eq(2L), any(), any()))
+        given(bookingService.lockRoom(eq(1L), eq(2L), any()))
                 .willReturn(sampleBooking(BookingStatus.LOCKING));
 
         String body = """
@@ -72,9 +72,7 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.borrower").value("牛"))
                 .andExpect(jsonPath("$.roomName").value("會議室 A"));
 
-        verify(bookingService).lockRoom(eq(1L), eq(2L),
-                eq(LocalDateTime.of(2026, 6, 6, 10, 0)),
-                eq(LocalDateTime.of(2026, 6, 6, 10, 30)));
+        verify(bookingService).lockRoom(eq(1L), eq(2L), any());
     }
 
     @Test
@@ -87,7 +85,7 @@ class BookingControllerTest {
 
     @Test
     void lock_whenOverlap_returns409_withMessage() throws Exception {
-        given(bookingService.lockRoom(anyLong(), anyLong(), any(), any()))
+        given(bookingService.lockRoom(anyLong(), anyLong(), any()))
                 .willThrow(new BookingConflictException("時段重疊，預約失敗"));
 
         String body = """

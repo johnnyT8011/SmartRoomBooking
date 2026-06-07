@@ -67,21 +67,19 @@ public class BookingService {
      * caller blocks, then sees the overlap and is rejected.</p>
      */
     @Transactional
-    public Booking lockRoom(Long userId, Long roomId, LocalDateTime start, LocalDateTime end) {
+    public Booking lockRoom(Long userId, Long roomId, TimeRange range) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         // Pessimistic lock on the room serializes concurrent booking attempts (Scenario 3).
         MeetingRoom room = meetingRoomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new MeetingRoomNotFoundException(roomId));
 
-        // [Refactor #1/#2] Pack the loose start/end pair (arriving from the HTTP request) into a
-        // single TimeRange so the validator and overlap check take one argument, not two.
-        TimeRange range = new TimeRange(start, end);
+
         validator.validateAll(user, range);
         ensureNoRoomOverlap(roomId, range, null);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        Booking booking = new Booking(user, room, start, end, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, range, BookingStatus.LOCKING);
         booking.setLockedAt(now);
         booking.setLockExpiresAt(now.plusMinutes(LOCK_MINUTES));
         Booking saved = bookingRepository.save(booking);
@@ -158,21 +156,21 @@ public class BookingService {
         LocalDateTime weekStart = LocalDateTime.now(clock)
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 .toLocalDate().atStartOfDay();
-        return bookingRepository.findInRangeWithDetails(weekStart, weekStart.plusDays(7));
+        return bookingRepository.findInRangeWithDetails(new TimeRange(weekStart, weekStart.plusDays(7)));
     }
 
     /** Bookings occupying any slot within an arbitrary {@code [from, to)} range. */
     @Transactional(readOnly = true)
-    public List<Booking> getSchedule(LocalDateTime from, LocalDateTime to) {
-        return bookingRepository.findInRangeWithDetails(from, to);
+    public List<Booking> getSchedule(TimeRange range) {
+        return bookingRepository.findInRangeWithDetails(range);
     }
 
     // [Refactor #1/#2] Takes a TimeRange instead of a separate (start, end) pair.
     private void ensureNoRoomOverlap(Long roomId, TimeRange range, Long excludeId) {
         List<Booking> overlaps = (excludeId == null)
-                ? bookingRepository.findOverlapping(roomId, range.getStart(), range.getEnd(),
+                ? bookingRepository.findOverlapping(roomId, range,
                         BookingStatus.activeStatuses())
-                : bookingRepository.findOverlappingExcluding(roomId, range.getStart(), range.getEnd(),
+                : bookingRepository.findOverlappingExcluding(roomId, range,
                         BookingStatus.activeStatuses(), excludeId);
         if (!overlaps.isEmpty()) {
             throw new BookingConflictException(MSG_OVERLAP);

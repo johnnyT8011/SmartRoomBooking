@@ -78,11 +78,11 @@ class BookingServiceTest {
     @Test
     void lockRoom_happyPath_createsLockingBookingWith5MinuteExpiry() {
         stubExistingUserAndRoom();
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of());
         given(bookingRepository.save(any(Booking.class))).willAnswer(inv -> inv.getArgument(0));
 
-        Booking result = service.lockRoom(1L, 2L, START, END);
+        Booking result = service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END));
 
         assertThat(result.getStatus()).isEqualTo(BookingStatus.LOCKING);
         assertThat(result.getLockedAt()).isEqualTo(NOW);
@@ -97,11 +97,11 @@ class BookingServiceTest {
     @Test
     void lockRoom_whenOverlap_throwsConflict_andDoesNotSave() {
         stubExistingUserAndRoom();
-        Booking existing = new Booking(user, room, START, END, BookingStatus.BOOKED);
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        Booking existing = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of(existing));
 
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(BookingConflictException.class)
                 .hasMessageContaining("時段重疊");
 
@@ -113,15 +113,15 @@ class BookingServiceTest {
     @Test
     void lockRoom_concurrentRequests_onlyFirstSucceeds() {
         stubExistingUserAndRoom();
-        Booking first = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking first = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         // First check sees an empty slot; the second sees the booking the first one inserted.
-        given(bookingRepository.findOverlapping(eq(2L), eq(START), eq(END), any()))
+        given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of())
                 .willReturn(List.of(first));
         given(bookingRepository.save(any(Booking.class))).willAnswer(inv -> inv.getArgument(0));
 
-        assertThat(service.lockRoom(1L, 2L, START, END)).isNotNull();
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, START, END))
+        assertThat(service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END))).isNotNull();
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(BookingConflictException.class);
     }
 
@@ -131,7 +131,7 @@ class BookingServiceTest {
     void lockRoom_whenUserMissing_throwsUserNotFound() {
         given(userRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.lockRoom(99L, 2L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(99L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(bookingRepository, never()).save(any());
@@ -144,7 +144,7 @@ class BookingServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(meetingRoomRepository.findByIdForUpdate(404L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.lockRoom(1L, 404L, START, END))
+        assertThatThrownBy(() -> service.lockRoom(1L, 404L, new com.example.meetingroom.domain.TimeRange(START, END)))
                 .isInstanceOf(MeetingRoomNotFoundException.class);
 
         verify(bookingRepository, never()).save(any());
@@ -154,7 +154,7 @@ class BookingServiceTest {
 
     @Test
     void cancelBooking_setsCancelled_andDoesNotDelete() {
-        Booking booking = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         ReflectionTestUtils.setField(booking, "id", 50L);
         given(bookingRepository.findDetailedById(50L)).willReturn(Optional.of(booking));
 
@@ -170,10 +170,10 @@ class BookingServiceTest {
 
     @Test
     void confirmBooking_promotesLockingToBooked() {
-        Booking booking = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         ReflectionTestUtils.setField(booking, "id", 60L);
         given(bookingRepository.findDetailedById(60L)).willReturn(Optional.of(booking));
-        given(bookingRepository.findOverlappingExcluding(eq(2L), eq(START), eq(END), any(), eq(60L)))
+        given(bookingRepository.findOverlappingExcluding(eq(2L), any(), any(), eq(60L)))
                 .willReturn(List.of());
 
         Booking result = service.confirmBooking(60L);
@@ -183,11 +183,11 @@ class BookingServiceTest {
 
     @Test
     void confirmBooking_whenSlotStolen_throwsConflict() {
-        Booking booking = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         ReflectionTestUtils.setField(booking, "id", 61L);
-        Booking other = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking other = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         given(bookingRepository.findDetailedById(61L)).willReturn(Optional.of(booking));
-        given(bookingRepository.findOverlappingExcluding(eq(2L), eq(START), eq(END), any(), eq(61L)))
+        given(bookingRepository.findOverlappingExcluding(eq(2L), any(), any(), eq(61L)))
                 .willReturn(List.of(other));
 
         assertThatThrownBy(() -> service.confirmBooking(61L))
@@ -199,7 +199,7 @@ class BookingServiceTest {
 
     @Test
     void checkIn_setsCheckedInAndTimestamp() {
-        Booking booking = new Booking(user, room, START, END, BookingStatus.BOOKED);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.BOOKED);
         ReflectionTestUtils.setField(booking, "id", 70L);
         given(bookingRepository.findDetailedById(70L)).willReturn(Optional.of(booking));
 

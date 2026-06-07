@@ -55,8 +55,8 @@ class MeetingRoomControllerTest {
         Booking booking = new Booking(
                 new User("豬", "zhu@example.com"),
                 new MeetingRoom("會議室 B"),
-                LocalDateTime.of(2026, 6, 6, 9, 0),
-                LocalDateTime.of(2026, 6, 6, 10, 30),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 6, 9, 0),
+                LocalDateTime.of(2026, 6, 6, 10, 30)),
                 BookingStatus.BOOKED);
         given(bookingService.getWeeklySchedule()).willReturn(List.of(booking));
 

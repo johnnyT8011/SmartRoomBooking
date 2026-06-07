@@ -53,8 +53,8 @@ class BookingSchedulerTest {
     @Test
     void releaseExpiredLocks_marksExpired_andNotifies() {
         Booking stale = new Booking(user, room,
-                LocalDateTime.of(2026, 6, 5, 11, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 30), BookingStatus.LOCKING);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 11, 0),
+                LocalDateTime.of(2026, 6, 5, 11, 30)), BookingStatus.LOCKING);
         stale.setLockExpiresAt(NOW.minusMinutes(1));
         given(bookingRepository.findExpiredLocks(NOW)).willReturn(List.of(stale));
 
@@ -68,8 +68,8 @@ class BookingSchedulerTest {
     void releaseNoShows_usesNowMinus15Minutes_andReleases() {
         // Booking started at 09:00; now is 09:20 → past the 15-minute grace (Scenario 4).
         Booking noShow = new Booking(user, room,
-                LocalDateTime.of(2026, 6, 5, 9, 0),
-                LocalDateTime.of(2026, 6, 5, 9, 30), BookingStatus.BOOKED);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 9, 0),
+                LocalDateTime.of(2026, 6, 5, 9, 30)), BookingStatus.BOOKED);
         given(bookingRepository.findNoShows(any())).willReturn(List.of(noShow));
 
         scheduler.releaseNoShows();

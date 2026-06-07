@@ -61,12 +61,11 @@ public class Booking {
         // required by JPA
     }
 
-    public Booking(User user, MeetingRoom room, LocalDateTime startTime, LocalDateTime endTime,
-                   BookingStatus status) {
+    public Booking(User user, MeetingRoom room, TimeRange range, BookingStatus status) {
         this.user = user;
         this.room = room;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.startTime = range.getStart();
+        this.endTime = range.getEnd();
         this.status = status;
     }
 

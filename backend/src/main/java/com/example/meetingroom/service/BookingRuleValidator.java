@@ -94,7 +94,7 @@ public class BookingRuleValidator {
     /** Reject if this user already holds an active booking overlapping the requested slot. */
     public void checkUserConflict(User user, TimeRange range) {
         boolean clash = !bookingRepository
-                .findUserOverlapping(user.getId(), range.getStart(), range.getEnd(), BookingStatus.activeStatuses())
+                .findUserOverlapping(user.getId(), range, BookingStatus.activeStatuses())
                 .isEmpty();
         if (clash) {
             throw new BookingConflictException(MSG_USER_CONFLICT);

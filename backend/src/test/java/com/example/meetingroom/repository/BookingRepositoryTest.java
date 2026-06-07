@@ -35,7 +35,7 @@ class BookingRepositoryTest {
     }
 
     private Booking persistBooking(LocalDateTime start, LocalDateTime end, BookingStatus status) {
-        return bookingRepository.save(new Booking(user, roomA, start, end, status));
+        return bookingRepository.save(new Booking(user, roomA, new com.example.meetingroom.domain.TimeRange(start, end), status));
     }
 
     @Test
@@ -45,8 +45,8 @@ class BookingRepositoryTest {
                 LocalDateTime.of(2026, 6, 5, 15, 0), BookingStatus.BOOKED);
 
         List<Booking> overlap = bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 14, 30),
-                LocalDateTime.of(2026, 6, 5, 15, 30),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 14, 30),
+                LocalDateTime.of(2026, 6, 5, 15, 30)),
                 BookingStatus.activeStatuses());
 
         assertThat(overlap).hasSize(1);
@@ -59,14 +59,14 @@ class BookingRepositoryTest {
 
         // Back-to-back 15:00–16:00 must NOT count as overlap.
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 15, 0),
-                LocalDateTime.of(2026, 6, 5, 16, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 15, 0),
+                LocalDateTime.of(2026, 6, 5, 16, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
 
         // 13:00–14:00 just before also free.
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 13, 0),
-                LocalDateTime.of(2026, 6, 5, 14, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 13, 0),
+                LocalDateTime.of(2026, 6, 5, 14, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
     }
 
@@ -78,8 +78,8 @@ class BookingRepositoryTest {
                 LocalDateTime.of(2026, 6, 5, 15, 0), BookingStatus.EXPIRED);
 
         assertThat(bookingRepository.findOverlapping(roomA.getId(),
-                LocalDateTime.of(2026, 6, 5, 14, 0),
-                LocalDateTime.of(2026, 6, 5, 15, 0),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 14, 0),
+                LocalDateTime.of(2026, 6, 5, 15, 0)),
                 BookingStatus.activeStatuses())).isEmpty();
     }
 
@@ -89,7 +89,7 @@ class BookingRepositoryTest {
                 LocalDateTime.of(2026, 6, 5, 15, 0), BookingStatus.LOCKING);
 
         assertThat(bookingRepository.findOverlappingExcluding(roomA.getId(),
-                self.getStartTime(), self.getEndTime(),
+                new com.example.meetingroom.domain.TimeRange(self.getStartTime(), self.getEndTime()),
                 BookingStatus.activeStatuses(), self.getId())).isEmpty();
     }
 

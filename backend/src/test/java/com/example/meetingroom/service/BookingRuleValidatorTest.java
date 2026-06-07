@@ -145,9 +145,9 @@ class BookingRuleValidatorTest {
     @Test
     void userConflict_throwsWhenUserHasOverlap() {
         Booking existing = new Booking(user, new MeetingRoom("會議室 A"),
-                LocalDateTime.of(2026, 6, 5, 10, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 0), BookingStatus.BOOKED);
-        given(bookingRepository.findUserOverlapping(anyLong(), any(), any(), any()))
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 10, 0),
+                LocalDateTime.of(2026, 6, 5, 11, 0)), BookingStatus.BOOKED);
+        given(bookingRepository.findUserOverlapping(anyLong(), any(), any()))
                 .willReturn(List.of(existing));
 
         assertThatThrownBy(() -> validator.checkUserConflict(user, range(
@@ -158,7 +158,7 @@ class BookingRuleValidatorTest {
 
     @Test
     void userConflict_passesWhenNoOverlap() {
-        given(bookingRepository.findUserOverlapping(anyLong(), any(), any(), any()))
+        given(bookingRepository.findUserOverlapping(anyLong(), any(), any()))
                 .willReturn(List.of());
 
         assertThatCode(() -> validator.checkUserConflict(user, range(
