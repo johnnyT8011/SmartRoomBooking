@@ -1,8 +1,8 @@
 const BASE = '/api';
 
-/*
-* 檢查API的請求連線狀態
-*/
+/**
+ * 檢查API的請求連線狀態
+ */
 async function handle(res) {
   if (!res.ok) {
     let message = `請求失敗 (${res.status})`;

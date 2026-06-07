@@ -2,7 +2,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRooms, getSchedule, confirmBooking, lockRoom, cancelBooking, checkIn, sseUrl, } from '../lib/api.js';
 
-// 💡 核心技術：模擬全域的 fetch 功能
+/** 💡 核心技術：模擬全域的 fetch 功能
+ * 不使用fetch因為若使用則依賴網路會使測試變慢)
+ */
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
@@ -17,34 +19,35 @@ describe('API 模組單元測試', () => {
   // ==========================================
   describe('基礎資料與錯誤攔截處理 (handle)', () => {
     it('當後端成功回傳房間列表時，應該正確解析 JSON 資料', async () => {
-      // 1. 模擬後端回傳 200 成功與一筆房間資料
+      //模擬後端回傳 200 成功與一筆房間資料
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => [{ id: 'room-A', roomName: '大會議室' }],
       });
 
-      // 2. 呼叫我們要測試的 function
+      // 要測試的 function
       const rooms = await getRooms();
 
-      // 3. 斷言（驗證結果）：檢查網址對不對、資料有沒有拿到
+      // 檢查網址對不對、資料有沒有拿到
       expect(mockFetch).toHaveBeenCalledWith('/api/rooms');
       expect(rooms).toEqual([{ id: 'room-A', roomName: '大會議室' }]);
     });
 
     it('當後端噴出 400 錯誤時，handle 應該要能抓住並噴出後端的錯誤訊息', async () => {
-      // 1. 模擬後端爆炸，回傳錯誤訊息
+      // 模擬後端回傳錯誤訊息(已有預約資料)
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({ message: '該時段已被搶先預約！' }),
       });
 
-      // 2. 驗證程式有沒有如預期「噴出 Error」
+      // 驗證程式有沒有如預期「傳出 Error」
       await expect(getRooms()).rejects.toThrow('該時段已被搶先預約！');
     });
 
     it('204 No Content 應回傳 null', async () => {
+      // 檢查lock是否有正確運作
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 204,
@@ -125,6 +128,8 @@ describe('API 模組單元測試', () => {
         .rejects
         .toThrow('請求失敗 (400)');
     });
+
+    //特定行為的路由驗證 (Confirm / Cancel / CheckIn)
 
     it('confirmBooking 應呼叫正確網址', async () => {
       mockFetch.mockResolvedValueOnce({
