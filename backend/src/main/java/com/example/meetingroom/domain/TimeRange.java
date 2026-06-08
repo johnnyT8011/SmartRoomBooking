@@ -34,11 +34,11 @@ public class TimeRange {
         return end;
     }
 
-    /** Whole minutes between start and end. */
-    public long durationMinutes() {
+    /** Whole minutes between start and end using the specified timezone. */
+    public long durationMinutes(ZoneId zoneId) {
         return Duration.between(
-                start.atZone(ZoneId.systemDefault()),
-                end.atZone(ZoneId.systemDefault())
+                start.atZone(zoneId),
+                end.atZone(zoneId)
         ).toMinutes();
     }
 

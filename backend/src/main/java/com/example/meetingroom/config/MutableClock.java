@@ -72,13 +72,12 @@ public class MutableClock extends Clock {
             return false;
         }
         MutableClock other = (MutableClock) obj;
-        return this.zone.equals(other.zone) &&
-               this.offset.get().equals(other.offset.get());
+        return this.zone.equals(other.zone);
     }
 
     @Override
     public int hashCode() {
-        return zone.hashCode() ^ offset.get().hashCode();
+        return zone.hashCode();
     }
 }
 
