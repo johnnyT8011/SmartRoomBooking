@@ -66,9 +66,11 @@ class BookingRuleValidatorTest {
     // 案例 1：不合法的輸入資料 10:15、10:45
     @Test
     void timeBlock_rejectsNon30MinuteBoundary() {
-        assertThatThrownBy(() -> validator.validateTimeBlock(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 3, 10, 15),
-                LocalDateTime.of(2026, 6, 3, 10, 45))))
+                LocalDateTime.of(2026, 6, 3, 10, 45)
+        );
+        assertThatThrownBy(() -> validator.validateTimeBlock(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("30 分鐘");
     }
@@ -86,9 +88,11 @@ class BookingRuleValidatorTest {
     // 案例 1：超過 4 小時(不合法)
     @Test
     void duration_rejectsOverFourHours() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 3, 9, 0),
-                LocalDateTime.of(2026, 6, 3, 14, 0))))
+                LocalDateTime.of(2026, 6, 3, 14, 0)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("4 小時");
     }
@@ -96,18 +100,22 @@ class BookingRuleValidatorTest {
     // 案例 2：少於 30 分鐘(不合法)
     @Test
     void duration_rejectsUnder30Minutes() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 3, 9, 0),
-                LocalDateTime.of(2026, 6, 3, 9, 15))))
+                LocalDateTime.of(2026, 6, 3, 9, 15)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class);
     }
 
     // 案例 3：結束比開始早(不合法)
     @Test
     void duration_rejectsEndBeforeStart() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 3, 11, 0),
-                LocalDateTime.of(2026, 6, 3, 10, 0))))
+                LocalDateTime.of(2026, 6, 3, 10, 0)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class);
     }
 
@@ -133,9 +141,11 @@ class BookingRuleValidatorTest {
     // 案例 1：2026/6/3 預約 2026/6/15 的會議室(超過 7 天) 不合法
     @Test
     void window_rejectsBeyond7Days() {
-        assertThatThrownBy(() -> validator.validateBookingWindow(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 15, 10, 0),
-                LocalDateTime.of(2026, 6, 15, 11, 0))))
+                LocalDateTime.of(2026, 6, 15, 11, 0)
+        );
+        assertThatThrownBy(() -> validator.validateBookingWindow(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("7 天");
     }
@@ -143,9 +153,11 @@ class BookingRuleValidatorTest {
     // 案例 2：2026/6/3 預約 2026/6/1 的會議室(預約過去) 不合法
     @Test
     void window_rejectsPast() {
-        assertThatThrownBy(() -> validator.validateBookingWindow(range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 1, 10, 0),
-                LocalDateTime.of(2026, 6, 1, 11, 0))))
+                LocalDateTime.of(2026, 6, 1, 11, 0)
+        );
+        assertThatThrownBy(() -> validator.validateBookingWindow(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("過去");
     }
@@ -170,9 +182,11 @@ class BookingRuleValidatorTest {
         given(bookingRepository.findUserOverlapping(anyLong(), any(), any()))
                 .willReturn(List.of(existing));
 
-        assertThatThrownBy(() -> validator.checkUserConflict(user, range(
+        TimeRange range = range(
                 LocalDateTime.of(2026, 6, 5, 10, 30),
-                LocalDateTime.of(2026, 6, 5, 11, 30))))
+                LocalDateTime.of(2026, 6, 5, 11, 30)
+        );
+        assertThatThrownBy(() -> validator.checkUserConflict(user, range))
                 .isInstanceOf(BookingConflictException.class);
     }
 

@@ -122,7 +122,8 @@ class BookingServiceTest {
         given(bookingRepository.findOverlapping(eq(2L), any(), any()))
                 .willReturn(List.of(existing));
         // 呼叫 service.lockRoom ，而因為有人預約了，所以形態為 BookingConflictException ，警告標語要有時段重疊
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
+        TimeRange range = new TimeRange(START, END);
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, range))
                 .isInstanceOf(BookingConflictException.class)
                 .hasMessageContaining("時段重疊");
         // 驗證 bookingRepository 沒有 save 任何預約
@@ -143,9 +144,10 @@ class BookingServiceTest {
         // 後端丟什麼 Booking(any(Booking.class)) 就回傳什麼回去(inv.getArgument(0))
         given(bookingRepository.save(any(Booking.class))).willAnswer(inv -> inv.getArgument(0));
         // 驗證第一個人，有成功預約(.isNotNull())
-        assertThat(service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END))).isNotNull();
+        TimeRange range = new TimeRange(START, END);
+        assertThat(service.lockRoom(1L, 2L, range)).isNotNull();
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤必須剛好預約衝突(.isInstanceOf(BookingConflictException.class))
-        assertThatThrownBy(() -> service.lockRoom(1L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
+        assertThatThrownBy(() -> service.lockRoom(1L, 2L, range))
                 .isInstanceOf(BookingConflictException.class);
     }
 
@@ -155,7 +157,8 @@ class BookingServiceTest {
         // 設定查詢 ID 99L 時回傳 Optional.empty() 查無此人
         given(userRepository.findById(99L)).willReturn(Optional.empty());
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤是 UserNotFoundException.class
-        assertThatThrownBy(() -> service.lockRoom(99L, 2L, new com.example.meetingroom.domain.TimeRange(START, END)))
+        TimeRange range = new TimeRange(START, END);
+        assertThatThrownBy(() -> service.lockRoom(99L, 2L, range))
                 .isInstanceOf(UserNotFoundException.class);
         // 確保拋出異常中，沒有執行過任何 save()
         verify(bookingRepository, never()).save(any());
@@ -169,9 +172,10 @@ class BookingServiceTest {
         // 會議室查不到 ID 404L 時回傳 Optional.empty() 查無此會議室
         given(meetingRoomRepository.findByIdForUpdate(404L)).willReturn(Optional.empty());
         // assertThatThrownBy 必須拋出任何錯誤，並預期內部錯誤是 MeetingRoomNotFoundException.class
-        assertThatThrownBy(() -> service.lockRoom(1L, 404L, new com.example.meetingroom.domain.TimeRange(START, END)))
+        TimeRange range = new TimeRange(START, END);
+        assertThatThrownBy(() -> service.lockRoom(1L, 404L, range))
                 .isInstanceOf(MeetingRoomNotFoundException.class);
-        // 確保拋出異常中，沒有執行過任何 save()
+        // 確保拋出異常中，沒有執行過 any save()
         verify(bookingRepository, never()).save(any());
     }
 
