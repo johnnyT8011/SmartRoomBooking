@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import dayjs from 'dayjs';
 import { App as AntApp } from 'antd';
 import App from '../App';
 
@@ -82,18 +83,24 @@ describe('App 根元件核心整合測試', () => {
     const dayViewBtn = screen.getByText('日視角');
     await userEvent.click(dayViewBtn);
 
-    // 切換到日視角後，標題應該變成當天的格式（依據 Mock 伺服器回傳時間計算）
+    // app 的 baseDate 以 dayjs()（真實今天）初始化，與 mock 的 sim time 無關，
+    // 故預期值必須由同一個來源動態計算，不能寫死日期（寫死會隨執行當天而失敗）。
+    const today = dayjs();
+    const todayTitle = today.format('YYYY年M月D日');
+    const nextDayTitle = today.add(1, 'day').format('YYYY年M月D日');
+
+    // 切換到日視角後，標題應顯示「今天」的日期
     await waitFor(() => {
-      expect(screen.getByText(/2026年6月7日/)).toBeTruthy();
+      expect(screen.getByText(new RegExp(todayTitle))).toBeTruthy();
     });
 
     // 模擬使用者點擊下一天 "▶" 按鈕
     const nextBtn = screen.getByText('▶');
     await userEvent.click(nextBtn);
 
-    // 標題應該往後推一天，變成 6月8日
+    // 標題應該往後推一天
     await waitFor(() => {
-      expect(screen.getByText(/2026年6月8日/)).toBeTruthy();
+      expect(screen.getByText(new RegExp(nextDayTitle))).toBeTruthy();
     });
   });
 });

@@ -15,7 +15,8 @@ permissions:
 jobs:
   # ---------- 後端：Spring Boot / JUnit / JaCoCo / Sonar ----------
   backend:
-    name: Backend build, test & Sonar (Java 17)
+    # 名稱保持與 branch protection ruleset 要求的必過檢查一致（除測試外另含 Sonar 分析）
+    name: Backend build & test (Java 17)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,7 +42,8 @@ jobs:
 
   # ---------- 前端：Vite / Vitest / Sonar ----------
   frontend:
-    name: Frontend test & Sonar (Node 20)
+    # 名稱保持與 branch protection ruleset 要求的必過檢查一致（除測試外另含 Sonar 分析）
+    name: Frontend test (Node 20)
     runs-on: ubuntu-latest
     defaults:
       run:
