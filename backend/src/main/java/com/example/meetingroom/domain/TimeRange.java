@@ -2,6 +2,7 @@ package com.example.meetingroom.domain;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * [Refactor #1 Data clumps / #2 Long parameter list — Introduce Parameter Object]
@@ -33,10 +34,14 @@ public class TimeRange {
         return end;
     }
 
-    /** Whole minutes between start and end. */
-    public long durationMinutes() {
-        return Duration.between(start, end).toMinutes();
+    /** Whole minutes between start and end using the specified timezone. */
+    public long durationMinutes(ZoneId zoneId) {
+        return Duration.between(
+                start.atZone(zoneId),
+                end.atZone(zoneId)
+        ).toMinutes();
     }
+
 
     /** True when end is strictly after start. */
     public boolean endsAfterStart() {

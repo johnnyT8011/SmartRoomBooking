@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -62,8 +63,8 @@ class MeetingRoomControllerTest {
         Booking booking = new Booking(
                 new User("豬", "zhu@example.com"),
                 new MeetingRoom("會議室 B"),
-                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 6, 9, 0),
-                LocalDateTime.of(2026, 6, 6, 10, 30)),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, Month.JUNE, 6, 9, 0),
+                LocalDateTime.of(2026, Month.JUNE, 6, 10, 30)),
                 BookingStatus.BOOKED);
         // 在取得每周排程時回傳 booking
         given(bookingService.getWeeklySchedule()).willReturn(List.of(booking));

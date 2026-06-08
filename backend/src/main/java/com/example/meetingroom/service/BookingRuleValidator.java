@@ -1,6 +1,7 @@
 package com.example.meetingroom.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Component;
 
@@ -71,7 +72,7 @@ public class BookingRuleValidator {
         if (!range.endsAfterStart()) {
             throw new InvalidBookingException(MSG_END_BEFORE_START);
         }
-        long minutes = range.durationMinutes();
+        long minutes = range.durationMinutes(clock.getZone());
         if (minutes < MIN_DURATION_MINUTES) {
             throw new InvalidBookingException(MSG_MIN_DURATION);
         }

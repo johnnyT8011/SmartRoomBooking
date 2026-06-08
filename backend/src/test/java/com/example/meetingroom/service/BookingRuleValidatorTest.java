@@ -3,14 +3,13 @@ package com.example.meetingroom.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-// import static org.junit.jupiter.api.Assertions.assertTrue;
-// import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -43,7 +42,7 @@ class BookingRuleValidatorTest {
     // 取得目前這台電腦的時區 ZoneId：處理時區的類別 systemDefault()：抓取作業系統預設時區
     private static final ZoneId ZONE = ZoneId.systemDefault();
     // 時間殘根，預設是2026/6/3 9:00
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 6, 3, 9, 0);
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, Month.JUNE, 3, 9, 0);
 
     // 資料庫殘根，模擬物件
     @Mock
@@ -68,9 +67,11 @@ class BookingRuleValidatorTest {
     // 案例 1：不合法的輸入資料 10:15、10:45
     @Test
     void timeBlock_rejectsNon30MinuteBoundary() {
-        assertThatThrownBy(() -> validator.validateTimeBlock(range(
-                LocalDateTime.of(2026, 6, 3, 10, 15),
-                LocalDateTime.of(2026, 6, 3, 10, 45))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 15),
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 45)
+        );
+        assertThatThrownBy(() -> validator.validateTimeBlock(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("30 分鐘");
     }
@@ -79,8 +80,8 @@ class BookingRuleValidatorTest {
     @Test
     void timeBlock_acceptsAlignedTimes() {
         assertThatCode(() -> validator.validateTimeBlock(range(
-                LocalDateTime.of(2026, 6, 3, 10, 0),
-                LocalDateTime.of(2026, 6, 3, 10, 30))))
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 30))))
                 .doesNotThrowAnyException();
     }
 
@@ -88,9 +89,11 @@ class BookingRuleValidatorTest {
     // 案例 1：超過 4 小時(不合法)
     @Test
     void duration_rejectsOverFourHours() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
-                LocalDateTime.of(2026, 6, 3, 9, 0),
-                LocalDateTime.of(2026, 6, 3, 14, 0))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 3, 9, 0),
+                LocalDateTime.of(2026, Month.JUNE, 3, 14, 0)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("4 小時");
     }
@@ -98,18 +101,22 @@ class BookingRuleValidatorTest {
     // 案例 2：少於 30 分鐘(不合法)
     @Test
     void duration_rejectsUnder30Minutes() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
-                LocalDateTime.of(2026, 6, 3, 9, 0),
-                LocalDateTime.of(2026, 6, 3, 9, 15))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 3, 9, 0),
+                LocalDateTime.of(2026, Month.JUNE, 3, 9, 15)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class);
     }
 
     // 案例 3：結束比開始早(不合法)
     @Test
     void duration_rejectsEndBeforeStart() {
-        assertThatThrownBy(() -> validator.validateDuration(range(
-                LocalDateTime.of(2026, 6, 3, 11, 0),
-                LocalDateTime.of(2026, 6, 3, 10, 0))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 3, 11, 0),
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 0)
+        );
+        assertThatThrownBy(() -> validator.validateDuration(range))
                 .isInstanceOf(InvalidBookingException.class);
     }
 
@@ -117,8 +124,8 @@ class BookingRuleValidatorTest {
     @Test
     void duration_acceptsExactlyFourHours() {
         assertThatCode(() -> validator.validateDuration(range(
-                LocalDateTime.of(2026, 6, 3, 9, 0),
-                LocalDateTime.of(2026, 6, 3, 13, 0))))
+                LocalDateTime.of(2026, Month.JUNE, 3, 9, 0),
+                LocalDateTime.of(2026, Month.JUNE, 3, 13, 0))))
                 .doesNotThrowAnyException();
     }
 
@@ -126,8 +133,8 @@ class BookingRuleValidatorTest {
     @Test
     void duration_acceptsExactly30Minutes() {
         assertThatCode(() -> validator.validateDuration(range(
-                LocalDateTime.of(2026, 6, 3, 9, 30),
-                LocalDateTime.of(2026, 6, 3, 10, 0))))
+                LocalDateTime.of(2026, Month.JUNE, 3, 9, 30),
+                LocalDateTime.of(2026, Month.JUNE, 3, 10, 0))))
                 .doesNotThrowAnyException();
     }
 
@@ -135,9 +142,11 @@ class BookingRuleValidatorTest {
     // 案例 1：2026/6/3 預約 2026/6/15 的會議室(超過 7 天) 不合法
     @Test
     void window_rejectsBeyond7Days() {
-        assertThatThrownBy(() -> validator.validateBookingWindow(range(
-                LocalDateTime.of(2026, 6, 15, 10, 0),
-                LocalDateTime.of(2026, 6, 15, 11, 0))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 15, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 15, 11, 0)
+        );
+        assertThatThrownBy(() -> validator.validateBookingWindow(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("7 天");
     }
@@ -145,9 +154,11 @@ class BookingRuleValidatorTest {
     // 案例 2：2026/6/3 預約 2026/6/1 的會議室(預約過去) 不合法
     @Test
     void window_rejectsPast() {
-        assertThatThrownBy(() -> validator.validateBookingWindow(range(
-                LocalDateTime.of(2026, 6, 1, 10, 0),
-                LocalDateTime.of(2026, 6, 1, 11, 0))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 1, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 1, 11, 0)
+        );
+        assertThatThrownBy(() -> validator.validateBookingWindow(range))
                 .isInstanceOf(InvalidBookingException.class)
                 .hasMessageContaining("過去");
     }
@@ -156,8 +167,8 @@ class BookingRuleValidatorTest {
     @Test
     void window_acceptsWithin7Days() {
         assertThatCode(() -> validator.validateBookingWindow(range(
-                LocalDateTime.of(2026, 6, 5, 10, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 0))))
+                LocalDateTime.of(2026, Month.JUNE, 5, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 5, 11, 0))))
                 .doesNotThrowAnyException();
     }
 
@@ -167,14 +178,16 @@ class BookingRuleValidatorTest {
     void userConflict_throwsWhenUserHasOverlap() {
         // 在記憶體中 new 一筆已經預約成功的紀錄：6/5 的 10:00 ~ 11:00 在會議室 A
         Booking existing = new Booking(user, new MeetingRoom("會議室 A"),
-                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 10, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 0)), BookingStatus.BOOKED);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, Month.JUNE, 5, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 5, 11, 0)), BookingStatus.BOOKED);
         given(bookingRepository.findUserOverlapping(anyLong(), any(), any()))
                 .willReturn(List.of(existing));
 
-        assertThatThrownBy(() -> validator.checkUserConflict(user, range(
-                LocalDateTime.of(2026, 6, 5, 10, 30),
-                LocalDateTime.of(2026, 6, 5, 11, 30))))
+        TimeRange range = range(
+                LocalDateTime.of(2026, Month.JUNE, 5, 10, 30),
+                LocalDateTime.of(2026, Month.JUNE, 5, 11, 30)
+        );
+        assertThatThrownBy(() -> validator.checkUserConflict(user, range))
                 .isInstanceOf(BookingConflictException.class);
     }
 
@@ -186,8 +199,8 @@ class BookingRuleValidatorTest {
                 .willReturn(List.of());
         // 使用者預約 10:00 ~ 11:00
         assertThatCode(() -> validator.checkUserConflict(user, range(
-                LocalDateTime.of(2026, 6, 5, 10, 0),
-                LocalDateTime.of(2026, 6, 5, 11, 0))))
+                LocalDateTime.of(2026, Month.JUNE, 5, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 5, 11, 0))))
                 .doesNotThrowAnyException();
     }
 
