@@ -79,13 +79,19 @@ class MutableClockTest {
         MutableClock clock2 = new MutableClock(UTC);
         MutableClock clock3 = new MutableClock(ASIA_TAIPEI);
 
-        // Same zone, should be equal, even if offsets are different (based on our current equals implementation)
+        // 1. Same instance (this == obj)
+        assertThat(clock1).isEqualTo(clock1);
+
+        // 2. Different type / null (!(obj instanceof MutableClock))
+        assertThat(clock1).isNotEqualTo(null);
+        assertThat(clock1).isNotEqualTo(new Object());
+
+        // 3. Same zone, should be equal, even if offsets are different
         clock2.advance(Duration.ofHours(5));
-        
         assertThat(clock1).isEqualTo(clock2);
         assertThat(clock1.hashCode()).isEqualTo(clock2.hashCode());
         
-        // Different zone, should not be equal
+        // 4. Different zone, should not be equal
         assertThat(clock1).isNotEqualTo(clock3);
         assertThat(clock1.hashCode()).isNotEqualTo(clock3.hashCode());
     }
