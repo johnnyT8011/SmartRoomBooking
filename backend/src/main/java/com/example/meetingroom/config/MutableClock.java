@@ -62,4 +62,23 @@ public class MutableClock extends Clock {
     public boolean isSimulated() {
         return !offset.get().isZero();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof MutableClock)) {
+            return false;
+        }
+        MutableClock other = (MutableClock) obj;
+        return this.zone.equals(other.zone) &&
+               this.offset.get().equals(other.offset.get());
+    }
+
+    @Override
+    public int hashCode() {
+        return zone.hashCode() ^ offset.get().hashCode();
+    }
 }
+
