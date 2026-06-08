@@ -161,6 +161,15 @@ class BookingRuleValidatorTest {
                 .doesNotThrowAnyException();
     }
 
+    // 案例 4：2026/6/3 預約剛好7天
+    @Test
+    void window_acceptsExactly7DaysAhead() {
+        LocalDateTime start = NOW.plusDays(7);
+        LocalDateTime end = start.plusHours(1);
+        assertThatCode(() -> validator.validateBookingWindow(range(start,end)))
+                .doesNotThrowAnyException();
+    }
+
     // ---- checkUserConflict ----
     // 案例 1：
     @Test
