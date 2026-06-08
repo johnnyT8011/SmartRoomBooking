@@ -1,6 +1,6 @@
 # 智慧會議室預約系統 (Smart Meeting Room Reservation System)
 
-核心機制：**防重疊預約**、**5 分鐘預約鎖**、**15 分鐘無人報到自動釋放**、**SSE 即時通知**。
+核心機制：**防重疊預約**、**5 分鐘預約鎖**、**15 分鐘無人報到自動釋放**、**SSE 即時通知**
 
 - **後端** `backend/`：Spring Boot 3.5 (Java 17)、Spring Data JPA、H2、JUnit 5 + Mockito、Server-Sent Events。**未使用 Redis 或 Message Queue。**
 - **前端** `frontend/`：React (Vite) + Ant Design，外觀／互動參考原型 (`前端構思.html`)，含日 / 週(橫向) / 月三種視角。
