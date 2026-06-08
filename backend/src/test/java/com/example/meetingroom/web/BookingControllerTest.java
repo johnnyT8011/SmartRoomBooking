@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +53,8 @@ class BookingControllerTest {
         User user = new User("牛", "niu@example.com");
         MeetingRoom room = new MeetingRoom("會議室 A");
         return new Booking(user, room,
-                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 6, 10, 0),
-                LocalDateTime.of(2026, 6, 6, 10, 30)), status);
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, Month.JUNE, 6, 10, 0),
+                LocalDateTime.of(2026, Month.JUNE, 6, 10, 30)), status);
     }
 
     // 測試前端的資料有準確傳到 Service

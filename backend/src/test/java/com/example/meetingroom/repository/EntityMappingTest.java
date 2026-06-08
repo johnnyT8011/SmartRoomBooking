@@ -3,6 +3,7 @@ package com.example.meetingroom.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,8 @@ class EntityMappingTest {
         User user = em.persist(new User("牛", "niu@example.com"));
         MeetingRoom room = em.persist(new MeetingRoom("會議室 A"));
         Booking booking = em.persist(new Booking(user, room,
-                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, 6, 5, 9, 0),
-                LocalDateTime.of(2026, 6, 5, 10, 30)),
+                new com.example.meetingroom.domain.TimeRange(LocalDateTime.of(2026, Month.JUNE, 5, 9, 0),
+                LocalDateTime.of(2026, Month.JUNE, 5, 10, 30)),
                 BookingStatus.BOOKED));
         // 寫入資料庫
         em.flush();
@@ -48,7 +49,7 @@ class EntityMappingTest {
         assertThat(reloaded.getUser().getEmpName()).isEqualTo("牛");
         assertThat(reloaded.getRoom().getRoomName()).isEqualTo("會議室 A");
         assertThat(reloaded.getStatus()).isEqualTo(BookingStatus.BOOKED);
-        assertThat(reloaded.getStartTime()).isEqualTo(LocalDateTime.of(2026, 6, 5, 9, 0));
+        assertThat(reloaded.getStartTime()).isEqualTo(LocalDateTime.of(2026, Month.JUNE, 5, 9, 0));
     }
 
     // 測試資料有無寫入資料庫

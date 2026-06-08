@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
@@ -45,10 +46,10 @@ class BookingServiceTest {
     // 取得目前這台電腦的時區 ZoneId：處理時區的類別 systemDefault()：抓取作業系統預設時區
     private static final ZoneId ZONE = ZoneId.systemDefault();
     // 時間殘根，預設是2026/6/5 8:00
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 6, 5, 8, 0);
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, Month.JUNE, 5, 8, 0);
     // 預約殘根，預設是預約2026/6/5 10:00 到 10:30
-    private static final LocalDateTime START = LocalDateTime.of(2026, 6, 5, 10, 0);
-    private static final LocalDateTime END = LocalDateTime.of(2026, 6, 5, 10, 30);
+    private static final LocalDateTime START = LocalDateTime.of(2026, Month.JUNE, 5, 10, 0);
+    private static final LocalDateTime END = LocalDateTime.of(2026, Month.JUNE, 5, 10, 30);
 
     @Mock private BookingRepository bookingRepository;
     @Mock private UserRepository userRepository;
