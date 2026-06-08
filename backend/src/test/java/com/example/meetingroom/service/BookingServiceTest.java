@@ -198,7 +198,7 @@ class BookingServiceTest {
     @Test
     void cancelLocking_setsCancelled_andDoesNotDelete() {
         // new 一筆狀態為 LOCKING 的預約
-        Booking booking = new Booking(user, room, START, END, BookingStatus.LOCKING);
+        Booking booking = new Booking(user, room, new com.example.meetingroom.domain.TimeRange(START, END), BookingStatus.LOCKING);
         // 設定已經存在一筆 ID 為 50 的資料
         ReflectionTestUtils.setField(booking, "id", 50L);
         // 當 findDetailedById 呼叫 ID 50 時，回傳狀態為 LOCKING 的預約
