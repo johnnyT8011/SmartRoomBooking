@@ -225,6 +225,7 @@ export default function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#c7d2fe', fontSize: 13 }}>通知對象：</span>
             <Select
+              data-testid="notification-user-select"
               value={currentUserId}
               onChange={setCurrentUserId}
               style={{ minWidth: 120 }}
