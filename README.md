@@ -9,6 +9,8 @@
 
 每次 push / PR 由 GitHub Actions 自動建置、執行後端 (JUnit) 與前端 (Vitest) 測試，並送 SonarQube Cloud 進行靜態分析與覆蓋率回報 (後端 JaCoCo、前端 lcov)。
 
+SonarQube 掃描結果入口:https://sonarcloud.io/organizations/johnnyt8011/projects
+
 **後端 (`backend/`, Java)**
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-backend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-backend)
