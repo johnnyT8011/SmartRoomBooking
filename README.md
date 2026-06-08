@@ -5,6 +5,24 @@
 - **後端** `backend/`：Spring Boot 3.5 (Java 17)、Spring Data JPA、H2、JUnit 5 + Mockito、Server-Sent Events。**未使用 Redis 或 Message Queue。**
 - **前端** `frontend/`：React (Vite) + Ant Design，外觀／互動參考原型 (`前端構思.html`)，含日 / 週(橫向) / 月三種視角。
 
+## 持續整合與程式碼品質 (CI / Code Quality)
+
+每次 push / PR 由 GitHub Actions 自動建置、執行後端 (JUnit) 與前端 (Vitest) 測試，並送 SonarQube Cloud 進行靜態分析與覆蓋率回報 (後端 JaCoCo、前端 lcov)。
+
+**後端 (`backend/`, Java)**
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-backend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-backend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-backend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-backend)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-backend&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-backend)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-backend&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-backend)
+
+**前端 (`frontend/`, JavaScript)**
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-frontend)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-frontend&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-frontend)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=johnnyt8011_SmartRoomBooking-frontend&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=johnnyt8011_SmartRoomBooking-frontend)
+
 ---
 
 ## 執行方式
