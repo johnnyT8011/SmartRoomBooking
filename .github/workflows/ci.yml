@@ -1,4 +1,4 @@
-# GitHub Actions CI — push / PR 時自動 build 並跑「後端 + 前端」測試
+# GitHub Actions CI — push / PR 時 build、跑測試，並送 SonarQube Cloud 分析
 # 放置位置：repo 根目錄下的  .github/workflows/ci.yml
 
 name: CI
@@ -13,15 +13,17 @@ permissions:
   contents: read
 
 jobs:
-  # ---------- 後端：Spring Boot / JUnit ----------
-  backend-test:
-    name: Backend build & test (Java 17)
+  # ---------- 後端：Spring Boot / JUnit / JaCoCo / Sonar ----------
+  backend:
+    name: Backend build, test & Sonar (Java 17)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # Sonar 需要完整 git 歷史來判斷 new code / blame
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -30,18 +32,24 @@ jobs:
           cache: maven
       - name: Make mvnw executable
         run: chmod +x mvnw
-      - name: Run backend tests
-        run: ./mvnw -B test          # 通過時 log 出現 Tests run: 48, Failures: 0
+      - name: Build, test & analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        # verify 會跑 48 個測試 + 產 JaCoCo 報告 (target/site/jacoco/jacoco.xml)，
+        # 之後 sonar:sonar 上傳分析。org/projectKey/host 來自 pom.xml 的 <properties>。
+        run: ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
 
-  # ---------- 前端：Vite / Vitest ----------
-  frontend-test:
-    name: Frontend test (Node 20)
+  # ---------- 前端：Vite / Vitest / Sonar ----------
+  frontend:
+    name: Frontend test & Sonar (Node 20)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
@@ -49,7 +57,12 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Install deps
-        run: npm ci               # 照 package-lock 裝齊（含 testing-library / jsdom 等測試套件）
-      - name: Run frontend tests
-        run: npm run test         # = Vitest。GitHub Actions 會設 CI=true，Vitest 自動以「跑一次就結束」模式執行
-        # 萬一它卡住不結束(進了 watch 模式)，把這行改成： npx vitest run
+        run: npm ci
+      - name: Test with coverage
+        run: npm run test:coverage    # 產生 coverage/lcov.info
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: frontend    # 讀 frontend/sonar-project.properties
