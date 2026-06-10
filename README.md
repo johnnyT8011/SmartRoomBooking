@@ -53,15 +53,15 @@ npm run dev
 
 ### 後端 — Render
 
-後端部署於 Render,網址 https://smartroombooking-meqk.onrender.com
-透過 Dockerfile 容器化部署
-監聽 new-version 分支,push 後自動部署
-Free 方案閒置會休眠,首次喚醒需數十秒
+-後端部署於 Render,網址 https://smartroombooking-meqk.onrender.com
+-透過 Dockerfile 容器化部署
+-監聽 new-version 分支,push 後自動部署
+-Free 方案閒置會休眠,首次喚醒需數十秒
 
 ### 前端 — Vercel
 
-前端部署於 Vercel,網址:https://smart-room-booking-bay.vercel.app/
-連動 GitHub,push 後自動 build & deploy
+-前端部署於 Vercel,網址:https://smart-room-booking-bay.vercel.app/
+-連動 GitHub,push 後自動 build & deploy
 
 ---
 
