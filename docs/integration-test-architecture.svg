@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 560" font-family="'Microsoft JhengHei','PingFang TC','Noto Sans CJK TC',sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#607d8b"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="560" fill="#ffffff"/>
+  <text x="30" y="40" font-size="22" font-weight="700" fill="#263238">整合測試架構（Bottom-Up：L1 → L2 → L3）</text>
+
+  <!-- ===== L3 outer band ===== -->
+  <rect x="30" y="60" width="640" height="480" rx="14" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="46" y="86" font-size="16" font-weight="700" fill="#1565c0">L3　端到端整合（＋HTTP / Controller）　—　5 條</text>
+
+  <!-- ===== L2 band ===== -->
+  <rect x="70" y="200" width="560" height="324" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="86" y="226" font-size="16" font-weight="700" fill="#2e7d32">L2　服務層整合（＋Service / Validator）　—　4 條</text>
+
+  <!-- ===== L1 band ===== -->
+  <rect x="110" y="364" width="480" height="144" rx="12" fill="#fff3e0" stroke="#ef6c00" stroke-width="2"/>
+  <text x="126" y="390" font-size="16" font-weight="700" fill="#ef6c00">L1　持久層整合（Repository ↔ H2）　—　2 條</text>
+
+  <!-- ===== edges ===== -->
+  <g stroke="#607d8b" stroke-width="2" fill="none" marker-end="url(#arr)">
+    <path d="M350 140 L350 149"/>
+    <path d="M350 190 L350 235"/>
+    <path d="M345 277 L225 299"/>
+    <path d="M350 277 L350 429"/>
+    <path d="M355 277 L460 299"/>
+    <path d="M350 451 L379 451"/>
+  </g>
+
+  <!-- ===== nodes ===== -->
+  <g font-size="15" fill="#263238" text-anchor="middle">
+    <!-- L3 -->
+    <rect x="255" y="100" width="190" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="350" y="125">HTTP / MockMvc</text>
+    <rect x="255" y="150" width="190" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="350" y="175">BookingController</text>
+
+    <!-- L2 -->
+    <rect x="255" y="236" width="190" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="350" y="261" font-weight="700">BookingService</text>
+    <rect x="120" y="300" width="180" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="210" y="325">BookingRuleValidator</text>
+    <rect x="360" y="300" width="200" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="460" y="325">NotificationService</text>
+
+    <!-- L1 -->
+    <rect x="160" y="430" width="190" height="40" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.6"/>
+    <text x="255" y="455">BookingRepository</text>
+    <rect x="379" y="430" width="150" height="40" rx="8" fill="#fffde7" stroke="#37474f" stroke-width="1.6"/>
+    <text x="454" y="455">H2 Database</text>
+  </g>
+
+  <!-- footer note -->
+  <text x="30" y="552" font-size="12" fill="#78909c">每層「往上多包一層」：L1 只接 DB；L2 再疊上 Service＋Validator；L3 最後疊上 Controller＋HTTP，整條鏈路全真實、不 mock。</text>
+</svg>
