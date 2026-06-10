@@ -27,13 +27,13 @@ SonarQube 掃描結果入口:https://sonarcloud.io/organizations/johnnyt8011/pro
 
 ---
 
-## 執行方式
+## 本地執行方式
 
 ### 後端 (預設 http://localhost:8080)
 ```bash
 cd backend
 ./mvnw spring-boot:run        # Windows: mvnw.cmd spring-boot:run
-./mvnw test                   # 執行全部 48 個測試
+./mvnw test                   # 執行全部 68 個測試
 ```
 H2 主控台：http://localhost:8080/h2-console （JDBC URL `jdbc:h2:mem:meetingroom`，使用者 `sa`，無密碼）。
 啟動時會自動種子化會議室 A/B/C 與使用者 牛 / 豬 / 羊 / 鴕鳥。
@@ -47,6 +47,21 @@ npm install
 npm run dev
 ```
 `vite.config.js` 已將 `/api` 代理至 `http://localhost:8080`，因此前後端同源、SSE 連線正常。
+
+
+## 雲端部署 (Production)
+
+### 後端 — Render
+
+後端部署於 Render,網址 https://smartroombooking-meqk.onrender.com
+透過 Dockerfile 容器化部署
+監聽 new-version 分支,push 後自動部署
+Free 方案閒置會休眠,首次喚醒需數十秒
+
+### 前端 — Vercel
+
+前端部署於 Vercel,網址:https://smart-room-booking-bay.vercel.app/
+連動 GitHub,push 後自動 build & deploy
 
 ---
 
